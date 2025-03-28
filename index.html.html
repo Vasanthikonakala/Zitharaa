@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Dynamic Job Portal</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+            color: #333;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .container {
+            width: 85%;
+            margin: 20px auto;
+            max-width: 1200px;
+        }
+
+        .job-listing {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .job-listing:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .job-details, .dashboard, #loginDiv, #profileDiv, #historyDiv {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+            display: none;
+        }
+
+        .job-details button, .job-listing button, .dashboard button, #loginDiv button, #profileDiv button, #historyDiv button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-left: 5px;
+        }
+
+        .job-details button:hover, .job-listing button:hover, .dashboard button:hover, #loginDiv button:hover, #profileDiv button:hover, #historyDiv button:hover {
+            background-color: #0056b3;
+        }
+
+        .dashboard input, .dashboard textarea, #loginDiv input {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            transition: border-color 0.3s;
+        }
+
+        .dashboard input:focus, .dashboard textarea:focus, #loginDiv input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        .dark-mode {
+            background-color: #1a202c;
+            color: #e2e8f0;
+        }
+
+        .dark-mode .job-listing, .dark-mode .job-details, .dark-mode .dashboard, .dark-mode #loginDiv, .dark-mode #profileDiv, .dark-mode #historyDiv {
+            background-color: #2d3748;
+            box-shadow: 0 4px 8px rgba(255, 255, 255, 0.1);
+        }
+
+        .dark-mode .dashboard input, .dark-mode .dashboard textarea, .dark-mode #loginDiv input {
+            background-color: #4a5568;
+            color: #e2e8f0;
+            border: 1px solid #718096;
+        }
+
+        .dark-mode button {
+            background-color: #4a5568;
+            color: #e2e8f0;
+        }
+
+        #darkmodebutton, #dashboardbutton, #profileButton, #logoutButton, #loginButton, #historyButton {
+            padding: 12px 20px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.3s;
+        }
+
+        #darkmodebutton:hover, #dashboardbutton:hover, #profileButton:hover, #logoutButton:hover, #loginButton:hover, #historyButton:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="darkmodebutton">Dark Mode</button>
+        <button id="loginButton">Login</button>
+        <button id="dashboardbutton">Dashboard</button>
+        <button id="profileButton">Profile</button>
+        <button id="historyButton">History</button>
+        <button id="logoutButton">Logout</button>
+        <h1 id="jobTitle">Job Listings</h1>
+        <div id="jobListings"></div>
+        <div id="jobDetails" class="job-details"></div>
+        <div id="companyDashboard" class="dashboard"></div>
+        <div id="profileDiv">
+            <h2>Profile</h2>
+            <p>User: ExampleUser</p>
+            <p>Email: example@example.com</p>
+            <button onclick="hideProfile()">Back</button>
+        </div>
+        <div id="loginDiv">
+            <h2>Login</h2>
+            <input type="text" id="usernameInput" placeholder="Username"><br><br>
+            <input type="password" id="passwordInput" placeholder="Password"><br><br>
+            <button onclick="login()">Login</button>
+            <button onclick="hideLogin()">Back</button>
+        </div>
+        <div id="historyDiv">
+            <h2>Application History</h2>
+            <div id="historyList"></div>
+            <button onclick="hideHistory()">Back</button>
+        </div>
+    </div>
+
+    <script>
+        const jobListingsDiv = document.getElementById('jobListings');
+        const jobDetailsDiv = document.getElementById('jobDetails');
+        const companyDashboardDiv = document.getElementById('companyDashboard');
+        const darkModeButton = document.getElementById('darkmodebutton');
+        const dashboardButton = document.getElementById('dashboardbutton');
+        const body = document.body;
+        const jobTitle = document.getElementById('jobTitle');
+        const profileButton = document.getElementById('profileButton');
+        const logoutButton = document.getElementById('logoutButton');
+        const profileDiv = document.getElementById('profileDiv');
+        const loginButton = document.getElementById('loginButton');
+        const loginDiv = document.getElementById('loginDiv');
+        const historyButton = document.getElementById('historyButton');
+        const historyDiv = document.getElementById('historyDiv');
+        const historyList = document.getElementById('historyList');
+
+        let jobs = [
+            { id: 1, title: 'Software Engineer', company: 'Zithara', location: 'Hyderabad', description: 'We are looking for a talented and motivated Software Engineer to join our dynamic team. You will be responsible for designing, developing, and maintaining scalable software solutions. This role involves working closely with cross-functional teams to deliver high-quality products.' },
+            { id: 2, title: 'Web Developer', company: 'Web Solutions', location: 'Banglore', description: 'We are seeking a talented Web Developer to join our team and help build high-performance, visually appealing, and user-friendly web applications. You will work closely with designers, backend developers, and product managers to create seamless web experiences.' },
+            { id: 3, title: 'Data Scientist', company: 'Infosys', location: 'Mysore', description: 'We are looking for a Data Scientist to help us extract insights from complex datasets and drive data-informed decisions. You will work with large-scale data, develop predictive models, and collaborate with cross-functional teams to solve business problems using machine learning and statistical analysis.' },
+        ];
+
+        let isLoggedIn = false;
+        let applicationHistory = [];
+
+        function renderJobListings() {
+            jobListingsDiv.innerHTML = '';
+            jobs.forEach(job => {
+                const jobDiv = document.createElement('div');
+                jobDiv.classList.add('job-listing');
+                jobDiv.innerHTML = `
+                    <div>
+                        <h2>${job.title}</h2>
+                        <p>${job.company}</p>
+                        <p>${job.location}</p>
+                    </div>
+                    <div>
+                        <button onclick="showJobDetails(${job.id})">Details</button>
+                        <button onclick="applyJob(${job.id})">Apply</button>
+                        <button onclick="editJob(${job.id})">Edit</button>
+                        <button onclick="deleteJob(${job.id})">Delete</button>
+                    </div>
+                `;
+                jobListingsDiv.appendChild(jobDiv);
+            });
+        }
+
+        function showJobDetails(jobId) {
+            const job = jobs.find(j => j.id === jobId);
+            if (job) {
+                jobDetailsDiv.innerHTML = `
+                    <button onclick="hideJobDetails()">Back</button>
+                    <h2>${job.title}</h2>
+                    <p>${job.company}</p>
+                    <p>Location: ${job.location}</p>
+                    <p>Description: ${job.description}</p>
+                `;
+                jobListingsDiv.style.display = 'none';
+                companyDashboardDiv.style.display = 'none';
+                loginDiv.style.display = 'none';
+                profileDiv.style.display = 'none';
+                historyDiv.style.display = 'none';
+                jobDetailsDiv.style.display = 'block';
+                jobTitle.textContent = "Job Details";
+            }
+        }
+
+        function hideJobDetails() {
+            jobDetailsDiv.style.display = 'none';
+            jobListingsDiv.style.display = 'block';
+            jobTitle.textContent = "Job Listings";
+        }
+
+        function showCompanyDashboard() {
+            if (!isLoggedIn) {
+                alert("Please login to access the dashboard.");
+                return;
+            }
+            companyDashboardDiv.innerHTML = `
+                <button onclick="hideCompanyDashboard()">Back</button>
+                <h2>Post a Job</h2>
+                <input type="text" id="jobTitleInput" placeholder="Title">
+                <input type="text" id="jobCompanyInput" placeholder="Company">
+                <input type="text" id="jobLocationInput" placeholder="Location">
+                <textarea id="jobDescriptionInput" placeholder="Description"></textarea>
+                <button onclick="postJob()">Post Job</button>
+            `;
+            jobListingsDiv.style.display = 'none';
+            jobDetailsDiv.style.display = 'none';
+            loginDiv.style.display = 'none';
+            profileDiv.style.display = 'none';
+            historyDiv.style.display = 'none';
+            companyDashboardDiv.style.display = 'block';
+            jobTitle.textContent = "Company Dashboard";
+        }
+
+        function hideCompanyDashboard() {
+            companyDashboardDiv.style.display = 'none';
+            jobListingsDiv.style.display = 'block';
+            jobTitle.textContent = "Job Listings";
+        }
+
+        function postJob() {
+            const title = document.getElementById('jobTitleInput').value;
+            const company = document.getElementById('jobCompanyInput').value;
+            const location = document.getElementById('jobLocationInput').value;
+            const description = document.getElementById('jobDescriptionInput').value;
+
+            if (title && company && location && description) {
+                const newJob = {
+                    id: Date.now(),
+                    title: title,
+                    company: company,
+                    location: location,
+                    description: description
+                };
+                jobs.push(newJob);
+                renderJobListings();
+                hideCompanyDashboard();
+            } else {
+                alert('Please fill in all fields.');
+            }
+        }
+
+        function deleteJob(jobId) {
+            jobs = jobs.filter(job => job.id !== jobId);
+            renderJobListings();
+        }
+
+        function editJob(jobId) {
+            // Add edit functionality here
+            alert("Edit functionality to be implemented for job ID: " + jobId);
+        }
+
+        function applyJob(jobId) {
+            const appliedJob = jobs.find(job => job.id === jobId);
+            if (appliedJob) {
+                applicationHistory.push(appliedJob);
+                alert("Applied for " + appliedJob.title);
+            }
+        }
+
+        darkModeButton.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+        });
+
+        dashboardButton.addEventListener('click', showCompanyDashboard);
+
+        profileButton.addEventListener('click', () => {
+            profileDiv.style.display = 'block';
+            jobListingsDiv.style.display = 'none';
+            jobDetailsDiv.style.display = 'none';
+            companyDashboardDiv.style.display = 'none';
+            loginDiv.style.display = 'none';
+            historyDiv.style.display = 'none';
+            jobTitle.textContent = "Profile";
+        });
+
+        logoutButton.addEventListener('click', () => {
+            isLoggedIn = false;
+            alert("Logged out!");
+            loginDiv.style.display = "block";
+            jobListingsDiv.style.display = "none";
+            jobDetailsDiv.style.display = "none";
+            companyDashboardDiv.style.display = "none";
+            profileDiv.style.display = "none";
+            historyDiv.style.display = "none";
+            jobTitle.textContent = "Login";
+        });
+
+        loginButton.addEventListener('click', () => {
+            profileDiv.style.display = 'none';
+            jobListingsDiv.style.display = 'none';
+            jobDetailsDiv.style.display = 'none';
+            companyDashboardDiv.style.display = 'none';
+            historyDiv.style.display = 'none';
+            loginDiv.style.display = 'block';
+            jobTitle.textContent = "Login";
+        });
+
+        function hideProfile(){
+            profileDiv.style.display = 'none';
+            jobListingsDiv.style.display = 'block';
+            jobTitle.textContent = "Job Listings";
+        }
+        function hideLogin(){
+            loginDiv.style.display = 'none';
+            jobListingsDiv.style.display = 'block';
+            jobTitle.textContent = "Job Listings";
+        }
+        function login(){
+            const username = document.getElementById('usernameInput').value;
+            const password = document.getElementById('passwordInput').value;
+            if(username && password){
+                isLoggedIn = true;
+                hideLogin();
+                alert("Logged in!");
+            }
+            else{
+                alert("Please enter username and password");
+            }
+        }
+        function showHistory(){
+            historyDiv.style.display = 'block';
+            jobListingsDiv.style.display = 'none';
+            jobDetailsDiv.style.display = 'none';
+            companyDashboardDiv.style.display = 'none';
+            loginDiv.style.display = 'none';
+            profileDiv.style.display = 'none';
+            jobTitle.textContent = "Application History";
+            historyList.innerHTML = '';
+            applicationHistory.forEach(job => {
+                historyList.innerHTML += `<p>${job.title} - ${job.company}</p>`;
+            });
+        }
+
+        function hideHistory(){
+            historyDiv.style.display = 'none';
+            jobListingsDiv.style.display = 'block';
+            jobTitle.textContent = "Job Listings";
+        }
+
+        historyButton.addEventListener('click', showHistory);
+        renderJobListings();
+    </script>
+</body>
+</html>
